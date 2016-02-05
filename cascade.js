@@ -3,11 +3,16 @@
  * It can be useful if you want to set limit
  * for simultaneously executing promise functions in one moment of time.
  * */
-
 (function(){
 	if (typeof Promise == "undefined") return;
 	if (typeof Promise.cascade != "undefined") return;
 
+	/**
+	 * @param {Array} promises - array of functions (NOT promises)
+	 * @param {Object} options
+	 * @param {Number} options.interval
+	 * @param {Number} options.stackSize
+	 * */
 	Promise.cascade = function(promises, options){
 
 		if (typeof options != "object" || typeof options.join == "functions") options = Object.create(null);
@@ -38,10 +43,10 @@
 		);
 
 		// Objects into Array
-		var tmp = [];
-		for(var prop in promises){
-			if (!promises.hasOwnProperty(prop)) continue;
-			tmp.push(promises[prop]);
+		var tmp = [], c;
+		var keys = Object.keys(promises);
+		for(c=0; c<keys.length; c++){
+			tmp.push(promises[keys[c]]);
 		}
 		promises = tmp;
 
@@ -49,15 +54,19 @@
 		var func = function(resolve, reject){
 			var promiseStack = [];
 
-			var tmp = [];
-			for (var c = 0; c < promises.length; c++) {
-				if (promises[c] === null) continue;
+			var tmp = [], c;
+			for (c = 0; c < promises.length; c++) {
+				if (typeof promises[c] != "function") continue;
 				tmp.push(promises[c]);
 			}
 			promises = tmp;
 
-			for (var c = 0; c < promises.length; c++) {
-				if (typeof promises[c] == "function") promiseStack.push(new Promise(promises[c]));
+			if (!promises.length){
+				resolve();
+			}
+
+			for (c = 0; c < promises.length; c++) {
+				promiseStack.push(new Promise(promises[c]));
 
 				promises[c] = null;
 
@@ -69,13 +78,9 @@
 				}
 			}
 
-			if (!promises.length){
-				resolve();
-			}
-
 			Promise.all(promiseStack)
 			.then(
-				function (e) {
+				function () {
 					setTimeout(
 						function () {
 							func(resolve,reject);

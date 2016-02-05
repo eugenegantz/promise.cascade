@@ -1,0 +1,7 @@
+.idea
+*.iml
+out
+gen
+*.zip
+*.7z
+*.rar

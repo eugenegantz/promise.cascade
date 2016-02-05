@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Promise.cascade</title>
+		<script type="application/javascript" src="cascade.js"></script>
+		<script>
+			document.addEventListener(
+				"DOMContentLoaded",
+				function(){
+					var body = document.querySelector("body");
+					var promises = [];
+					var result = [];
+
+					for(var c=0; c<25; c++){
+						// ignore non function
+						/*
+						if (!c){
+							promises.push({});
+							continue;
+						}
+						if (c==1){
+							promises.push(null);
+							continue;
+						}
+						*/
+						(function(){
+							var v = c;
+							var interval = Math.floor(Math.random() * 2000 + 1);
+							promises.push(
+								function(resolve, reject){
+									console.log(interval);
+									body.appendChild((function(){
+										var d = document.createElement("div");
+										d.innerHTML = '<div data-v="'+v+'">'+(v+1) + ". " + (interval / 1000) + " sec"+'</div>';
+										return d;
+									})());
+									setTimeout(
+										function(){
+											result.push(v);
+											document.querySelector('[data-v="'+v+'"]').innerHTML +=  " / done";
+											resolve();
+										},
+										interval
+									);
+								}
+							);
+						})();
+					}
+
+					Promise
+						.cascade(promises, {"interval":1, "stackSize":10})
+						.then(function(){
+							console.log(result);
+						})
+						.catch(function(err){
+							console.error(err);
+						});
+
+				},
+				false
+			);
+		</script>
+	</head>
+	<body>
+		25 async functions. stackSize = 10.<br />
+		-----------------------------------------------
+	</body>
+</html>
